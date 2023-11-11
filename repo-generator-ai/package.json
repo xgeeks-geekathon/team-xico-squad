@@ -2,6 +2,9 @@
   "name": "repo-generator-ai",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "dev": "vite-node"
+  },
   "devDependencies": {
     "bun-types": "latest",
     "vite-node": "^0.34.6"

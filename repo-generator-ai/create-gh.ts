@@ -1,7 +1,6 @@
 const prompt = require("prompt-sync")();
 const { Octokit } = require("@octokit/rest");
 const { execSync } = require("child_process");
-const fs = require("fs");
 const { join } = require("path");
 
 type Credentials = {
@@ -9,12 +8,14 @@ type Credentials = {
   token: string;
 };
 
+require("dotenv").config({ path: `.env.local` });
+
 // Function to get GitHub credentials from the user
 function getGitHubCredentials(): Credentials {
   // const username = prompt("Enter your GitHub username: ");
   const username = "rodrigofariow";
   // const token = prompt.hide("Enter your GitHub personal access token: "); // Use prompt.hide to hide the token input
-  const token = "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";
+  const token = process.env.GITHUB_TOKEN ?? "";
   return { username, token };
 }
 
