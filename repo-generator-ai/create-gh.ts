@@ -13,7 +13,7 @@ require("dotenv").config({ path: `.env.local` });
 // Function to get GitHub credentials from the user
 function getGitHubCredentials(): Credentials {
   // const username = prompt("Enter your GitHub username: ");
-  const username = "rodrigofariow";
+  const username = process.env.GITHUB_USERNAME ?? "";
   // const token = prompt.hide("Enter your GitHub personal access token: "); // Use prompt.hide to hide the token input
   const token = process.env.GITHUB_TOKEN ?? "";
   return { username, token };
