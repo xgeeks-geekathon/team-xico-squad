@@ -77,8 +77,7 @@ async function processAIWithoutRegex({ prompt }: { prompt: string }): Promise<{
   });
 
   const fileContent = chatCompletion.choices[0].message.content ?? "";
-  return {readMeFileContent: fileContent};
-
+  return { readMeFileContent: fileContent };
 }
 
 function writeToFile(filePath: string, data: string) {
@@ -97,8 +96,8 @@ async function generateRepo({
   gitHubCredentials,
   templateName = "react-ts",
   newRepoName,
-  libName = "@mui/material",
-  libVersion = "5.14.17",
+  libName = "zod", //"@mui/material",
+  libVersion = "3.22.4",
 }: {
   gitHubCredentials: GithubCredentials;
   templateName?: string;
@@ -120,8 +119,20 @@ async function generateRepo({
   cleanupUserTemplateFolder();
 
   try {
+    // const aiProcessingPromise = processAI({
+    //   prompt: `Give me an example of the library ${libName}@${libVersion} in tsx that exports a default component with the name App, with a date-picker.
+    //    I don't need instructions on how to install ${libName}.
+    //    Also give me a flat json just with all the dependencies you've explicitly through import statements used on the example. The dependency name should be a key and the version should be the value.
+    //    These peer dependencies should respect the version of the library ${libName}@${libVersion} that I specified.
+    //    Use explicit dependency versions. Do not use ^ or ~. If one dependency has peer dependencies, include them as well.
+    //    Make sure these dependencies match the version of their peers at the time of the example.
+    //    Do not include any text besides the \`\`\`tsx\`\`\` and  \`\`\`json\`\`\` code blocks.
+    //    Note that these dependency names can not contain more than one forward slash in the json code block.
+    //    `,
+    // });
+
     const aiProcessingPromise = processAI({
-      prompt: `Give me an example of the library ${libName}@${libVersion} in tsx that exports a default component with the name App, with a date-picker. 
+      prompt: `Give me an example of the library ${libName}@${libVersion} in tsx that exports a default component with the name App. 
        I don't need instructions on how to install ${libName}.
        Also give me a flat json just with all the dependencies you've explicitly through import statements used on the example. The dependency name should be a key and the version should be the value.
        These peer dependencies should respect the version of the library ${libName}@${libVersion} that I specified.
@@ -137,7 +148,6 @@ async function generateRepo({
       prompt: `create a small read-me file with big bold title to explain that I found a bug in the typescript ${libName} library and created this repo was a way to represent this issue, so others could check it. Create only 2 points, an overview and the link to the library.`,
     });
 
-
     execSync(
       `cp -r ${join(__dirname, `preset_templates/${templateName}/*`)} ${join(
         __dirname,
@@ -145,8 +155,10 @@ async function generateRepo({
       )}`,
     );
 
-    const [{ fileContent, dependencies }] = await Promise.all([aiProcessingPromise]);
-    const [{ readMeFileContent }] = await Promise.all([readMeAiProcessingPromise]);
+    const [{ fileContent, dependencies }, { readMeFileContent }] = await Promise.all([
+      aiProcessingPromise,
+      readMeAiProcessingPromise,
+    ]);
 
     writeDependencyToPackageJson({
       packageJsonPath: join(userTemplateAbsolutePath, "package.json"),
