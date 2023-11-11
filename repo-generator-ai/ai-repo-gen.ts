@@ -15,16 +15,18 @@ require("dotenv").config({ path: `.env.local` });
 const tsxRegex = /```tsx([\s\S]*?)```/;
 const jsonRegex = /```json([\s\S]*?)```/;
 
-async function processAI({ prompt }: { prompt: string }): Promise<{
+async function processAI({
+  prompt,
+  openAiKey,
+}: {
+  prompt: string;
+  openAiKey: string;
+}): Promise<{
   fileContent: string;
   dependencies: { [key: string]: string };
 }> {
-  if (process.env.OPENAI_API_KEY === undefined) {
-    throw new Error("OpenAI API key not found. Please set it in the .env file.");
-  }
-
   const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: openAiKey,
   });
 
   const chatCompletion = await openai.chat.completions.create({
@@ -92,18 +94,20 @@ function writeToFile(filePath: string, data: string) {
   }
 }
 
-async function generateRepo({
+export async function generateRepo({
   gitHubCredentials,
   templateName = "react-ts",
   newRepoName,
-  libName = "zod", //"@mui/material",
-  libVersion = "3.22.4",
+  libName = "@mui/material",
+  libVersion = "5.14.17",
+  openAiKey,
 }: {
   gitHubCredentials: GithubCredentials;
   templateName?: string;
   newRepoName: string;
   libName?: string;
   libVersion?: string;
+  openAiKey: string;
 }) {
   const cleanupUserTemplateFolder = () => {
     try {
@@ -132,7 +136,8 @@ async function generateRepo({
     // });
 
     const aiProcessingPromise = processAI({
-      prompt: `Give me an example of the library ${libName}@${libVersion} in tsx that exports a default component with the name App. 
+      openAiKey,
+      prompt: `Give me an example of the library ${libName}@${libVersion} in tsx that exports a default component with the name App, with a date-picker. 
        I don't need instructions on how to install ${libName}.
        Also give me a flat json just with all the dependencies you've explicitly through import statements used on the example. The dependency name should be a key and the version should be the value.
        These peer dependencies should respect the version of the library ${libName}@${libVersion} that I specified.
@@ -200,6 +205,7 @@ async function main() {
     gitHubCredentials: getGitHubCredentials(),
     templateName: "react-ts",
     newRepoName,
+    openAiKey: process.env.OPENAI_KEY ?? "",
   });
 }
 
