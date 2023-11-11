@@ -14,7 +14,7 @@ require("dotenv").config({ path: `.env.local` });
 
 const tsxRegex = /```tsx([\s\S]*?)```/;
 const jsonRegex = /```json([\s\S]*?)```/;
-const markdownRegex = /```json([\s\S]*?)```/;
+const markdownRegex = /```markdown([\s\S]*?)```/;
 
 async function processAI({
   prompt,
@@ -76,7 +76,9 @@ async function processAIReadMe({ prompt, openAiKey }: { prompt: string; openAiKe
     model: "ft:gpt-3.5-turbo-1106:xgeeks::8JodsBt4",
   });
 
-  const fileContent = chatCompletion.choices[0].message.content ?? "";
+  const content = chatCompletion.choices[0].message.content ?? "";
+  const fileContentMatch = content.match(markdownRegex)?.[0] ?? "";
+  const fileContent = fileContentMatch.replace("```markdown", "").replace("```", "");
   return { readMeFileContent: fileContent };
 }
 
