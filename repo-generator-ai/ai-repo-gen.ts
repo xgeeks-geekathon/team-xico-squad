@@ -34,7 +34,7 @@ async function processAI({ prompt }: { prompt: string }): Promise<{
         content: prompt,
       },
     ],
-    model: "gpt-4",
+    model: "ft:gpt-3.5-turbo-1106:xgeeks::8JodsBt4",
   });
 
   const content = chatCompletion.choices[0].message.content ?? "";
@@ -53,6 +53,32 @@ async function processAI({ prompt }: { prompt: string }): Promise<{
     fileContent,
     dependencies: (dependencies ?? {}) as Record<string, string>,
   };
+}
+
+async function processAIWithoutRegex({ prompt }: { prompt: string }): Promise<{
+  readMeFileContent: string;
+}> {
+  if (process.env.OPENAI_API_KEY === undefined) {
+    throw new Error("OpenAI API key not found. Please set it in the .env file.");
+  }
+
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  const chatCompletion = await openai.chat.completions.create({
+    messages: [
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+    model: "ft:gpt-3.5-turbo-1106:xgeeks::8JodsBt4",
+  });
+
+  const fileContent = chatCompletion.choices[0].message.content ?? "";
+  return {readMeFileContent: fileContent};
+
 }
 
 function writeToFile(filePath: string, data: string) {
@@ -106,6 +132,12 @@ async function generateRepo({
        `,
     });
 
+    /*TODO : needs to be assync FARIA */
+    const readMeAiProcessingPromise = processAIWithoutRegex({
+      prompt: `create a small read-me file with big bold title to explain that I found a bug in the typescript ${libName} library and created this repo was a way to represent this issue, so others could check it. Create only 2 points, an overview and the link to the library.`,
+    });
+
+
     execSync(
       `cp -r ${join(__dirname, `preset_templates/${templateName}/*`)} ${join(
         __dirname,
@@ -114,6 +146,7 @@ async function generateRepo({
     );
 
     const [{ fileContent, dependencies }] = await Promise.all([aiProcessingPromise]);
+    const [{ readMeFileContent }] = await Promise.all([readMeAiProcessingPromise]);
 
     writeDependencyToPackageJson({
       packageJsonPath: join(userTemplateAbsolutePath, "package.json"),
@@ -123,7 +156,7 @@ async function generateRepo({
     // console.log("after regex fileContent", fileContent);
 
     writeToFile(join(userTemplateAbsolutePath, "src/App.tsx"), fileContent);
-
+    writeToFile(join(userTemplateAbsolutePath, "README.MD"), readMeFileContent);
     // Create GitHub repository
     // await createRepository(gitHubCredentials, newRepoName);
 
