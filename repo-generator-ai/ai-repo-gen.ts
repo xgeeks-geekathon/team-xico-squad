@@ -1,34 +1,41 @@
 const prompt = require("prompt-sync")();
-const { Octokit } = require("@octokit/rest");
-const { execSync } = require("child_process");
-const { join } = require("path");
+import { Octokit } from "@octokit/rest";
+import { execSync } from "child_process";
+import { join } from "path";
 import fs from "fs";
 
-type Credentials = {
+type GithubCredentials = {
   username: string;
   token: string;
 };
 
 require("dotenv").config({ path: `.env.local` });
 
-// Main function
-async function main() {
+async function generateRepo({
+  gitHubCredentials,
+  templateName = "react-ts",
+  newRepoName,
+}: {
+  gitHubCredentials: GithubCredentials;
+  templateName?: string;
+  newRepoName: string;
+}) {
+  const userTemplateAbsolutePath = join(__dirname, "user_templates");
   try {
-    // Get user input
-    const credentials = getGitHubCredentials();
-    const repoName = prompt("Enter the name for the new GitHub repository: ");
-    // const repoPath = prompt("Enter the local path of the code to push: ");
-
     execSync(
-      `cp -r ${join(__dirname, "preset_templates/*")} ${join(
+      `cp -r ${join(__dirname, `preset_templates/${templateName}/*`)} ${join(
         __dirname,
         "user_templates",
       )}`,
     );
-    const userTemplateAbsolutePath = join(__dirname, "user_templates");
+
+    writeDependencyToPackageJson({
+      packageJsonPath: join(userTemplateAbsolutePath, "package.json"),
+      newDependency: { name: "zod", version: "latest" },
+    });
 
     // Create GitHub repository
-    await createRepository(credentials, repoName);
+    await createRepository(gitHubCredentials, newRepoName);
 
     // Initialize local git repository
     initializeLocalRepo(userTemplateAbsolutePath);
@@ -37,19 +44,34 @@ async function main() {
     addAndCommitChanges(userTemplateAbsolutePath);
 
     // Push changes to GitHub repository
-    pushToGitHub(credentials, repoName, userTemplateAbsolutePath);
-
+    pushToGitHub({
+      credentials: gitHubCredentials,
+      repoName: newRepoName,
+      repoPath: userTemplateAbsolutePath,
+    });
+  } catch (error: any) {
+    console.error("An unexpected error occurred:", error.message);
+  } finally {
     execSync(`rm -rf ${userTemplateAbsolutePath}/*`);
     execSync(`rm -rf ${userTemplateAbsolutePath}/.git`);
-  } catch (error) {
-    console.error("An unexpected error occurred:", error.message);
   }
+}
+
+// Main function
+async function main() {
+  const newRepoName = prompt("Enter the name for the new GitHub repository: ");
+
+  await generateRepo({
+    gitHubCredentials: getGitHubCredentials(),
+    templateName: "react-ts",
+    newRepoName,
+  });
 }
 
 // Run the script
 main();
 
-function getGitHubCredentials(): Credentials {
+function getGitHubCredentials(): GithubCredentials {
   // const username = prompt("Enter your GitHub username: ");
   const username = process.env.GITHUB_USERNAME ?? "";
   // const token = prompt.hide("Enter your GitHub personal access token: "); // Use prompt.hide to hide the token input
@@ -58,7 +80,7 @@ function getGitHubCredentials(): Credentials {
 }
 
 // Function to create a new GitHub repository
-async function createRepository(credentials: Credentials, repoName: string) {
+async function createRepository(credentials: GithubCredentials, repoName: string) {
   try {
     const octokit = new Octokit({
       auth: credentials.token,
@@ -70,7 +92,7 @@ async function createRepository(credentials: Credentials, repoName: string) {
     });
 
     console.log(`Repository '${repoName}' created successfully on GitHub.`);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating repository:", error.message);
   }
 }
@@ -80,7 +102,7 @@ function initializeLocalRepo(repoPath: string) {
   try {
     execSync(`git init "${repoPath}"`);
     console.log("Local repository initialized successfully.");
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error initializing local repository:", error.message);
   }
 }
@@ -91,20 +113,28 @@ function addAndCommitChanges(repoPath: string) {
     execSync(`cd "${repoPath}" && git add .`);
     execSync(`cd "${repoPath}" && git commit -m "Initial commit"`);
     console.log("Local changes committed successfully.");
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error adding and committing changes:", error.message);
   }
 }
 
 // Function to push changes to the GitHub repository
-function pushToGitHub(credentials: Credentials, repoName: string, repoPath: string) {
+function pushToGitHub({
+  credentials,
+  repoName,
+  repoPath,
+}: {
+  credentials: GithubCredentials;
+  repoName: string;
+  repoPath: string;
+}) {
   try {
     execSync(
       `cd "${repoPath}" && git remote add origin https://${credentials.username}:${credentials.token}@github.com/${credentials.username}/${repoName}.git`,
     );
     execSync(`cd "${repoPath}" && git push -u origin master`);
     console.log("Code pushed to GitHub repository successfully.");
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error pushing to GitHub repository:", error.message);
   }
 }
