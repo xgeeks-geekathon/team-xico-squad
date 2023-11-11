@@ -61,7 +61,6 @@ async function processAI({
 async function processAIReadMe({ prompt, openAiKey }: { prompt: string; openAiKey: string }): Promise<{
   readMeFileContent: string;
 }> {
-
   const openai = new OpenAI({
     apiKey: openAiKey,
   });
@@ -92,22 +91,24 @@ function writeToFile(filePath: string, data: string) {
   }
 }
 
-export async function generateRepo({
+export async function writeToUserTemplate({
   gitHubCredentials,
   templateName = "react-ts",
   newRepoName,
-  libName = "@mui/material",
+  libName,
   libVersion = "5.14.17",
   openAiKey,
-  libProblemExplain
+  libProblemExplain,
+  parentPrefixPath = __dirname
 }: {
   gitHubCredentials: GithubCredentials;
   templateName?: string;
   newRepoName: string;
-  libName?: string;
+  libName: string;
   libVersion?: string;
   openAiKey: string;
   libProblemExplain: string
+  parentPrefixPath?: string
 }) {
   const cleanupUserTemplateFolder = () => {
     try {
@@ -118,7 +119,7 @@ export async function generateRepo({
     } catch {}
   };
 
-  const userTemplateAbsolutePath = join(__dirname, "user_templates");
+  const userTemplateAbsolutePath = join(parentPrefixPath, "user_templates");
 
   cleanupUserTemplateFolder();
 
@@ -156,8 +157,8 @@ export async function generateRepo({
 
 
     execSync(
-      `cp -r ${join(__dirname, `preset_templates/${templateName}/*`)} ${join(
-        __dirname,
+      `cp -r ${join(parentPrefixPath, `preset_templates/${templateName}/*`)} ${join(
+        parentPrefixPath,
         "user_templates",
       )}`,
     );
@@ -177,20 +178,22 @@ export async function generateRepo({
     writeToFile(join(userTemplateAbsolutePath, "src/App.tsx"), fileContent);
     writeToFile(join(userTemplateAbsolutePath, "README.MD"), readMeFileContent);
     // Create GitHub repository
-    // await createRepository(gitHubCredentials, newRepoName);
+    await createRepository(gitHubCredentials, newRepoName);
 
-    // // Initialize local git repository
-    // initializeLocalRepo(userTemplateAbsolutePath);
+    // Initialize local git repository
+    initializeLocalRepo(userTemplateAbsolutePath);
 
-    // // Add and commit local changes
-    // addAndCommitChanges(userTemplateAbsolutePath);
+    // Add and commit local changes
+    addAndCommitChanges(userTemplateAbsolutePath);
 
-    // // Push changes to GitHub repository
-    // pushToGitHub({
-    //   credentials: gitHubCredentials,
-    //   repoName: newRepoName,
-    //   repoPath: userTemplateAbsolutePath,
-    // });
+    // console.log('userTemplateAbsolutePath', userTemplateAbsolutePath)
+
+    // Push changes to GitHub repository
+    pushToGitHub({
+      credentials: gitHubCredentials,
+      repoName: newRepoName,
+      repoPath: userTemplateAbsolutePath,
+    });
   } catch (error: any) {
     console.error("An unexpected error occurred:", error.message);
   } finally {
@@ -204,10 +207,11 @@ async function main() {
   const newRepoName = "cavalo";
   const problemInLibExplained = "problena no package x"
 
-  await generateRepo({
+  await writeToUserTemplate({
     gitHubCredentials: getGitHubCredentials(),
     templateName: "react-ts",
     newRepoName,
+    libName: "@mui/material",
     openAiKey: process.env.OPENAI_API_KEY ?? "",
     libProblemExplain: problemInLibExplained
   });

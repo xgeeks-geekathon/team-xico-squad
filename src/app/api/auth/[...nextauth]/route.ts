@@ -1,9 +1,8 @@
 import { POST } from "@/app/api/qa-pg-vector/route";
 import { X } from "lucide-react";
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth, { Account, NextAuthOptions, Profile, Session, User } from "next-auth";
 import GithubProvider, { GithubProfile } from "next-auth/providers/github";
-import { generateRepo } from "../../../../../repo-generator-ai/ai-repo-gen";
-
+ 
 const appClientID = process.env.REACT_APP_CLIENT_ID;
 const appClientSecret = process.env.REACT_APP_CLIENT_SECRET;
 const appRedirectURI = process.env.REACT_APP_REDIRECT_URI;
@@ -32,29 +31,12 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  events: {
-    signIn: async (message) => {
-      console.log("events signIn");
-      generateRepo({
-        gitHubCredentials: {
-          username: message?.profile?.name ?? "",
-          token: message?.account?.accessToken ?? "",
-        },
-        templateName: "react-ts",
-        newRepoName: "cavalo",
-        openAiKey: process.env.OPENAI_KEY ?? "",
-      });
-    },
-    signOut: async (message) => {
-      console.log("signOut");
-    },
-  },
   callbacks: {
     jwt: async (user) => {
       return user;
     },
-    session: async ({ session, token }) => {
-      return { session, token };
+    session: async ({ session, token }): Promise<Session> => {
+      return { ...session, token };
     },
   },
   secret: nextAuthSecret as string,
