@@ -29,7 +29,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "src/utils/whole.mjs",
-    "repo-generator-ai/install-dep.js"
+    "repo-generator-ai/install-dep.ts"
   ],
   "exclude": ["node_modules"]
 }
