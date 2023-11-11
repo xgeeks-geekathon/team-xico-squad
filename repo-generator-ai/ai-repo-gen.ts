@@ -14,6 +14,7 @@ require("dotenv").config({ path: `.env.local` });
 
 const tsxRegex = /```tsx([\s\S]*?)```/;
 const jsonRegex = /```json([\s\S]*?)```/;
+const markdownRegex = /```json([\s\S]*?)```/;
 
 async function processAI({
   prompt,
@@ -57,7 +58,7 @@ async function processAI({
   };
 }
 
-async function processAIWithoutRegex({ prompt }: { prompt: string }): Promise<{
+async function processAIReadMe({ prompt }: { prompt: string }): Promise<{
   readMeFileContent: string;
 }> {
   if (process.env.OPENAI_API_KEY === undefined) {
@@ -101,6 +102,7 @@ export async function generateRepo({
   libName = "@mui/material",
   libVersion = "5.14.17",
   openAiKey,
+  libProblemExplain
 }: {
   gitHubCredentials: GithubCredentials;
   templateName?: string;
@@ -108,6 +110,7 @@ export async function generateRepo({
   libName?: string;
   libVersion?: string;
   openAiKey: string;
+  libProblemExplain: string
 }) {
   const cleanupUserTemplateFolder = () => {
     try {
@@ -149,9 +152,10 @@ export async function generateRepo({
     });
 
     /*TODO : needs to be assync FARIA */
-    const readMeAiProcessingPromise = processAIWithoutRegex({
-      prompt: `create a small read-me file with big bold title to explain that I found a bug in the typescript ${libName} library and created this repo was a way to represent this issue, so others could check it. Create only 2 points, an overview and the link to the library.`,
+    const readMeAiProcessingPromise = processAIReadMe({
+      prompt: `Generate a single markdown file for GitHub: For the typescript library ${libName} in version ${libVersion} with a problem ${libProblemExplain}. I created the repository https://github.com/${gitHubCredentials.username}/${newRepoName}.git to have an example of the problem so everyone can test it. Topics to have: Issue Description: Problem: Repository Example: Reproduction Steps:`,
     });
+
 
     execSync(
       `cp -r ${join(__dirname, `preset_templates/${templateName}/*`)} ${join(
@@ -200,12 +204,14 @@ export async function generateRepo({
 async function main() {
   // const newRepoName = prompt("Enter the name for the new GitHub repository: ");
   const newRepoName = "cavalo";
+  const problemInLibExplained = "problena no package x"
 
   await generateRepo({
     gitHubCredentials: getGitHubCredentials(),
     templateName: "react-ts",
     newRepoName,
     openAiKey: process.env.OPENAI_KEY ?? "",
+    libProblemExplain: problemInLibExplained
   });
 }
 
