@@ -15,16 +15,18 @@ require("dotenv").config({ path: `.env.local` });
 const tsxRegex = /```tsx([\s\S]*?)```/;
 const jsonRegex = /```json([\s\S]*?)```/;
 
-async function processAI({ prompt }: { prompt: string }): Promise<{
+async function processAI({
+  prompt,
+  openAiKey,
+}: {
+  prompt: string;
+  openAiKey: string;
+}): Promise<{
   fileContent: string;
   dependencies: { [key: string]: string };
 }> {
-  if (process.env.OPENAI_API_KEY === undefined) {
-    throw new Error("OpenAI API key not found. Please set it in the .env file.");
-  }
-
   const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: openAiKey,
   });
 
   const chatCompletion = await openai.chat.completions.create({
@@ -46,7 +48,7 @@ async function processAI({ prompt }: { prompt: string }): Promise<{
 
   const dependenciesMatch = content.match(jsonRegex)?.[0] ?? "";
   const dependencies = JSON.parse(
-    dependenciesMatch.replace("```json", "").replace("```", ""),
+    dependenciesMatch.replace("```json", "").replace("```", "")
   );
 
   return {
@@ -67,18 +69,20 @@ function writeToFile(filePath: string, data: string) {
   }
 }
 
-async function generateRepo({
+export async function generateRepo({
   gitHubCredentials,
   templateName = "react-ts",
   newRepoName,
   libName = "@mui/material",
   libVersion = "5.14.17",
+  openAiKey,
 }: {
   gitHubCredentials: GithubCredentials;
   templateName?: string;
   newRepoName: string;
   libName?: string;
   libVersion?: string;
+  openAiKey: string;
 }) {
   const cleanupUserTemplateFolder = () => {
     try {
@@ -95,6 +99,7 @@ async function generateRepo({
 
   try {
     const aiProcessingPromise = processAI({
+      openAiKey,
       prompt: `Give me an example of the library ${libName}@${libVersion} in tsx that exports a default component with the name App, with a date-picker. 
        I don't need instructions on how to install ${libName}.
        Also give me a flat json just with all the dependencies you've explicitly through import statements used on the example. The dependency name should be a key and the version should be the value.
@@ -109,8 +114,8 @@ async function generateRepo({
     execSync(
       `cp -r ${join(__dirname, `preset_templates/${templateName}/*`)} ${join(
         __dirname,
-        "user_templates",
-      )}`,
+        "user_templates"
+      )}`
     );
 
     const [{ fileContent, dependencies }] = await Promise.all([aiProcessingPromise]);
@@ -155,6 +160,7 @@ async function main() {
     gitHubCredentials: getGitHubCredentials(),
     templateName: "react-ts",
     newRepoName,
+    openAiKey: process.env.OPENAI_KEY ?? "",
   });
 }
 
@@ -220,7 +226,7 @@ function pushToGitHub({
 }) {
   try {
     execSync(
-      `cd "${repoPath}" && git remote add origin https://${credentials.username}:${credentials.token}@github.com/${credentials.username}/${repoName}.git`,
+      `cd "${repoPath}" && git remote add origin https://${credentials.username}:${credentials.token}@github.com/${credentials.username}/${repoName}.git`
     );
     execSync(`cd "${repoPath}" && git push -u origin master`);
     console.log("Code pushed to GitHub repository successfully.");
