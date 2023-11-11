@@ -58,15 +58,12 @@ async function processAI({
   };
 }
 
-async function processAIReadMe({ prompt }: { prompt: string }): Promise<{
+async function processAIReadMe({ prompt, openAiKey }: { prompt: string; openAiKey: string }): Promise<{
   readMeFileContent: string;
 }> {
-  if (process.env.OPENAI_API_KEY === undefined) {
-    throw new Error("OpenAI API key not found. Please set it in the .env file.");
-  }
 
   const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: openAiKey,
   });
 
   const chatCompletion = await openai.chat.completions.create({
@@ -153,6 +150,7 @@ export async function generateRepo({
 
     /*TODO : needs to be assync FARIA */
     const readMeAiProcessingPromise = processAIReadMe({
+      openAiKey,
       prompt: `Generate a single markdown file for GitHub: For the typescript library ${libName} in version ${libVersion} with a problem ${libProblemExplain}. I created the repository https://github.com/${gitHubCredentials.username}/${newRepoName}.git to have an example of the problem so everyone can test it. Topics to have: Issue Description: Problem: Repository Example: Reproduction Steps:`,
     });
 
@@ -210,7 +208,7 @@ async function main() {
     gitHubCredentials: getGitHubCredentials(),
     templateName: "react-ts",
     newRepoName,
-    openAiKey: process.env.OPENAI_KEY ?? "",
+    openAiKey: process.env.OPENAI_API_KEY ?? "",
     libProblemExplain: problemInLibExplained
   });
 }
