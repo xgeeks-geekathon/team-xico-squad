@@ -1,0 +1,29 @@
+# ########################################### #
+#      This file is required for IDP
+#      -----------------------------
+#            Do NOT delete it
+# ########################################### #
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: team-xico-squad
+  description: A starter template for NextJS AI Apps
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    github.com/project-slug: xgeeks-geekathon/team-xico-squad
+  tags: ["service", "nextjs", "ai"]
+  links:
+    - url: https://idp.xgeeks.tech/catalog/default/template/ai-starter-template-nextjs
+      title: Source Template
+      icon: docs
+    - url: https://github.com/xgeeks-geekathon/team-xico-squad.git
+      title: Project Source Code Repository
+      icon: github
+    - url: https://team-xico-squad-dev.xgeeks.tech
+      title: Project Website
+      icon: website
+spec:
+  type: service
+  lifecycle: experimental # REQUIRED, usually = production | experimental | deprecated
+  owner: group:default/idp_geekathon
+  system: geekathon

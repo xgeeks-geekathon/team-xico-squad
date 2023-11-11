@@ -1,0 +1,11 @@
+site_name: team-xico-squad
+site_description: "Main documentation for team-xico-squad project"
+repo_url: https://github.com/xgeeks-geekathon/team-xico-squad.git
+edit_uri: edit/master/docs
+
+# plugins:
+#   - techdocs-core
+
+# For sidebar navigation
+nav:
+  - Getting Started: "index.md"
