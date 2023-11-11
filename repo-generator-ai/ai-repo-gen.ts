@@ -3,6 +3,7 @@ import { Octokit } from "@octokit/rest";
 import { execSync } from "child_process";
 import { join } from "path";
 import fs from "fs";
+import { OpenAI } from "openai";
 
 type GithubCredentials = {
   username: string;
@@ -11,17 +12,100 @@ type GithubCredentials = {
 
 require("dotenv").config({ path: `.env.local` });
 
+const tsxRegex = /```tsx([\s\S]*?)```/;
+const jsonRegex = /```json([\s\S]*?)```/;
+
+async function processAI({ prompt }: { prompt: string }): Promise<{
+  fileContent: string;
+  dependencies: { [key: string]: string };
+}> {
+  if (process.env.OPENAI_API_KEY === undefined) {
+    throw new Error("OpenAI API key not found. Please set it in the .env file.");
+  }
+
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  const chatCompletion = await openai.chat.completions.create({
+    messages: [
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+    model: "gpt-4",
+  });
+
+  const content = chatCompletion.choices[0].message.content ?? "";
+
+  console.log("before regex fileContent", content);
+
+  const fileContentMatch = content.match(tsxRegex)?.[0] ?? "";
+  const fileContent = fileContentMatch.replace("```tsx", "").replace("```", "");
+
+  const dependenciesMatch = content.match(jsonRegex)?.[0] ?? "";
+  const dependencies = JSON.parse(
+    dependenciesMatch.replace("```json", "").replace("```", ""),
+  );
+
+  return {
+    fileContent,
+    dependencies: (dependencies ?? {}) as Record<string, string>,
+  };
+}
+
+function writeToFile(filePath: string, data: string) {
+  try {
+    fs.writeFileSync(filePath, data);
+  } catch (error: any) {
+    if (error) {
+      console.error("Error writing to file:", error.message);
+    } else {
+      console.log("Data written to file successfully.");
+    }
+  }
+}
+
 async function generateRepo({
   gitHubCredentials,
   templateName = "react-ts",
   newRepoName,
+  libName = "@mui/material",
+  libVersion = "5.14.17",
 }: {
   gitHubCredentials: GithubCredentials;
   templateName?: string;
   newRepoName: string;
+  libName?: string;
+  libVersion?: string;
 }) {
+  const cleanupUserTemplateFolder = () => {
+    try {
+      execSync(`rm -rf ${userTemplateAbsolutePath}/*`);
+    } catch {}
+    try {
+      execSync(`rm -rf ${userTemplateAbsolutePath}/.git`);
+    } catch {}
+  };
+
   const userTemplateAbsolutePath = join(__dirname, "user_templates");
+
+  cleanupUserTemplateFolder();
+
   try {
+    const aiProcessingPromise = processAI({
+      prompt: `Give me an example of the library ${libName}@${libVersion} in tsx that exports a default component with the name App, with a date-picker. 
+       I don't need instructions on how to install ${libName}.
+       Also give me a flat json just with all the dependencies you've explicitly through import statements used on the example. The dependency name should be a key and the version should be the value.
+       These peer dependencies should respect the version of the library ${libName}@${libVersion} that I specified.
+       Use explicit dependency versions. Do not use ^ or ~. If one dependency has peer dependencies, include them as well.
+       Make sure these dependencies match the version of their peers at the time of the example.
+       Do not include any text besides the \`\`\`tsx\`\`\` and  \`\`\`json\`\`\` code blocks.
+       Note that these dependency names can not contain more than one forward slash in the json code block.
+       `,
+    });
+
     execSync(
       `cp -r ${join(__dirname, `preset_templates/${templateName}/*`)} ${join(
         __dirname,
@@ -29,37 +113,43 @@ async function generateRepo({
       )}`,
     );
 
+    const [{ fileContent, dependencies }] = await Promise.all([aiProcessingPromise]);
+
     writeDependencyToPackageJson({
       packageJsonPath: join(userTemplateAbsolutePath, "package.json"),
-      newDependency: { name: "zod", version: "latest" },
+      newDependencies: dependencies,
     });
+
+    // console.log("after regex fileContent", fileContent);
+
+    writeToFile(join(userTemplateAbsolutePath, "src/App.tsx"), fileContent);
 
     // Create GitHub repository
-    await createRepository(gitHubCredentials, newRepoName);
+    // await createRepository(gitHubCredentials, newRepoName);
 
-    // Initialize local git repository
-    initializeLocalRepo(userTemplateAbsolutePath);
+    // // Initialize local git repository
+    // initializeLocalRepo(userTemplateAbsolutePath);
 
-    // Add and commit local changes
-    addAndCommitChanges(userTemplateAbsolutePath);
+    // // Add and commit local changes
+    // addAndCommitChanges(userTemplateAbsolutePath);
 
-    // Push changes to GitHub repository
-    pushToGitHub({
-      credentials: gitHubCredentials,
-      repoName: newRepoName,
-      repoPath: userTemplateAbsolutePath,
-    });
+    // // Push changes to GitHub repository
+    // pushToGitHub({
+    //   credentials: gitHubCredentials,
+    //   repoName: newRepoName,
+    //   repoPath: userTemplateAbsolutePath,
+    // });
   } catch (error: any) {
     console.error("An unexpected error occurred:", error.message);
   } finally {
-    execSync(`rm -rf ${userTemplateAbsolutePath}/*`);
-    execSync(`rm -rf ${userTemplateAbsolutePath}/.git`);
+    // cleanupUserTemplateFolder();
   }
 }
 
 // Main function
 async function main() {
-  const newRepoName = prompt("Enter the name for the new GitHub repository: ");
+  // const newRepoName = prompt("Enter the name for the new GitHub repository: ");
+  const newRepoName = "cavalo";
 
   await generateRepo({
     gitHubCredentials: getGitHubCredentials(),
@@ -161,10 +251,10 @@ function pushToGitHub({
 
 function writeDependencyToPackageJson({
   packageJsonPath,
-  newDependency: { name: newDependencyName, version: newDependencyVersion = "latest" },
+  newDependencies,
 }: {
   packageJsonPath: string;
-  newDependency: { name: string; version?: string };
+  newDependencies: Record<string, string>;
 }) {
   // Read the package.json file
   fs.readFile(packageJsonPath, "utf8", function (err, data) {
@@ -173,8 +263,13 @@ function writeDependencyToPackageJson({
       return;
     }
 
+    type RawPackageJson = {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    } & Record<string, unknown>;
+
     // Parse the JSON data
-    let packageObj;
+    let packageObj: RawPackageJson = { dependencies: {}, devDependencies: {} };
     try {
       packageObj = JSON.parse(data);
     } catch (parseErr) {
@@ -182,11 +277,17 @@ function writeDependencyToPackageJson({
       return;
     }
 
-    const newDependency = {
-      [newDependencyName]: newDependencyVersion,
-    };
-    // Insert the new dependency
-    packageObj.dependencies = { ...packageObj.dependencies, ...newDependency };
+    const filteredNewDependencies = Object.entries(newDependencies).reduce<
+      Record<string, string>
+    >((acc, [key, value]) => {
+      if (!packageObj.dependencies?.[key] && !packageObj.devDependencies?.[key]) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+
+    // Insert the new dependencies. These should not override the existing ones on the template
+    packageObj.dependencies = { ...packageObj.dependencies, ...filteredNewDependencies };
 
     // Convert the modified object back to a JSON string
     const updatedPackageJson = JSON.stringify(packageObj, null, 2); // "null, 2" for pretty formatting
