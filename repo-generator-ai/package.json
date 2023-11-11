@@ -1,0 +1,16 @@
+{
+  "name": "repo-generator-ai",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@octokit/core": "^5.0.1",
+    "@octokit/rest": "^20.0.2",
+    "prompt-sync": "^4.2.0"
+  }
+}
