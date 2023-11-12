@@ -34,10 +34,7 @@ export async function POST(req: Request) {
     const bag = token.token as Bag;
     console.log("SUBMIT POST session", bag);
     const accessToken = bag.account?.access_token;
-    const a = "";
-    console.log("SUBMIT POST accessToken", accessToken);
 
-    console.log("bag.profile", bag.profile);
     const username = bag.profile?.login ?? "";
 
     const { finalGithubUrl } = await writeToUserTemplate({
@@ -53,20 +50,6 @@ export async function POST(req: Request) {
       libProblemExplain: issueDescription,
       parentPrefixPath: resolve(__dirname, "../../../../../repo-generator-ai"),
     });
-
-    // const octokit = new Octokit({
-    //   auth: accessToken,
-    // });
-    // const requestResponse = await octokit.request("POST /user/repos", {
-    //   name: repoName,
-    //   description: issueDescription,
-    //   homepage: "https://github.com",
-    //   private: false,
-    //   is_template: true,
-    //   headers: {
-    //     "X-GitHub-Api-Version": "2022-11-28",
-    //   },
-    // });
 
     return NextResponse.json({ username, repoName }, { status: 200 });
   } catch (error: any) {
