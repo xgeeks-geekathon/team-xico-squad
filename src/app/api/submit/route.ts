@@ -9,10 +9,6 @@ import { resolve } from "path";
 dotenv.config({ path: `.env.local` });
 
 export async function POST(req: Request) {
-  const appClientID = process.env.REACT_APP_CLIENT_ID;
-  const appClientSecret = process.env.REACT_APP_CLIENT_SECRET;
-  const appRedirectURI = process.env.REACT_APP_REDIRECT_URI;
-
   const json = await req.json();
   console.log("SUBMIT json", json);
 

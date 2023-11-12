@@ -5,12 +5,11 @@ import GithubProvider, { GithubProfile } from "next-auth/providers/github";
 
 const appClientID = process.env.REACT_APP_CLIENT_ID;
 const appClientSecret = process.env.REACT_APP_CLIENT_SECRET;
-const appRedirectURI = process.env.REACT_APP_REDIRECT_URI;
 const nextAuthSecret = process.env.NEXTAUTH_SECRET;
 
 export const authOptions: NextAuthOptions = {
   pages: {
-    signIn: "/home", // Redirect users to "/login" when signing in
+    signIn: "/",
   },
   // Configure one or more authentication providers
   providers: [
