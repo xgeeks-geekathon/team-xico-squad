@@ -213,11 +213,6 @@ export async function writeToUserTemplate({
     return {
       finalGithubUrl,
     };
-  } catch (error: any) {
-    console.error("An unexpected error occurred:", error.message);
-    return {
-      finalGithubUrl: null,
-    };
   } finally {
     // cleanupUserTemplateFolder();
   }

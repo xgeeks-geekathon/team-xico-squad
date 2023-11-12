@@ -24,7 +24,7 @@ type FormValues = {
 };
 
 const initialValues: FormValues = {
-  libName: "@mui/material",
+  libName: "",
   issueDescription: "",
   repoName: "horse_repo",
   libVersion: "latest",
