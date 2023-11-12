@@ -1,5 +1,9 @@
 # Geekathon AI Starter Template
 
+## Files explaining the project
+
+- IssueGenerator.pdf
+
 ### 1. Fork and Clone repo
 
 Fork the repo to your Github account, then run the following command to clone the repo:
@@ -50,6 +54,7 @@ Now you are ready to test out the app locally! To do this, simply run `npm run d
 
 # IMPORTANT NOTES
 
-You need to sign out and re-sign in every time you submit in order for things to work.
+## Functionality
 
+You need to sign out and re-sign in every time you submit in order for things to work.
 Hackathon MVP issues :d
