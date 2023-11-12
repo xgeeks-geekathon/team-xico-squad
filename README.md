@@ -56,5 +56,5 @@ Now you are ready to test out the app locally! To do this, simply run `npm run d
 
 ## Functionality
 
-You need to sign out and re-sign in every time you submit in order for things to work.
+If it fails on submit, please sign out and re-sign in every time you submit in order for things to work.
 Hackathon MVP issues :d
