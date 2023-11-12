@@ -1,6 +1,6 @@
 const prompt = require("prompt-sync")();
 import { Octokit } from "@octokit/rest";
-import { execSync } from "child_process";
+import { exec, execSync } from "child_process";
 import { join } from "path";
 import fs from "fs";
 import { OpenAI } from "openai";
@@ -58,7 +58,13 @@ async function processAI({
   };
 }
 
-async function processAIReadMe({ prompt, openAiKey }: { prompt: string; openAiKey: string }): Promise<{
+async function processAIReadMe({
+  prompt,
+  openAiKey,
+}: {
+  prompt: string;
+  openAiKey: string;
+}): Promise<{
   readMeFileContent: string;
 }> {
   const openai = new OpenAI({
@@ -101,7 +107,7 @@ export async function writeToUserTemplate({
   libVersion,
   openAiKey,
   libProblemExplain,
-  parentPrefixPath = __dirname
+  parentPrefixPath = __dirname,
 }: {
   gitHubCredentials: GithubCredentials;
   templateName?: string;
@@ -109,21 +115,22 @@ export async function writeToUserTemplate({
   libName: string;
   libVersion: string;
   openAiKey: string;
-  libProblemExplain: string
-  parentPrefixPath?: string
+  libProblemExplain: string;
+  parentPrefixPath?: string;
 }): Promise<{
-  finalGithubUrl: string | null
+  finalGithubUrl: string | null;
 }> {
+  const userTemplateAbsolutePath = join(parentPrefixPath, "user_templates");
+
   const cleanupUserTemplateFolder = () => {
     try {
+      execSync(`mkdir -p ${userTemplateAbsolutePath}`);
       execSync(`rm -rf ${userTemplateAbsolutePath}/*`);
     } catch {}
     try {
       execSync(`rm -rf ${userTemplateAbsolutePath}/.git`);
     } catch {}
   };
-
-  const userTemplateAbsolutePath = join(parentPrefixPath, "user_templates");
 
   cleanupUserTemplateFolder();
 
@@ -155,7 +162,7 @@ export async function writeToUserTemplate({
        `,
     });
 
-    const finalGithubUrl = `https://github.com/${gitHubCredentials.username}/${newRepoName}.git`
+    const finalGithubUrl = `https://github.com/${gitHubCredentials.username}/${newRepoName}.git`;
 
     const readMeAiProcessingPromise = processAIReadMe({
       openAiKey,
@@ -163,7 +170,6 @@ export async function writeToUserTemplate({
       I created the repository ${finalGithubUrl} to have an example of the problem so everyone can test it. 
       Topics to have: Issue Description: Problem: Repository Example: Reproduction Steps this typescript project`,
     });
-
 
     execSync(
       `cp -r ${join(parentPrefixPath, `preset_templates/${templateName}/*`)} ${join(
@@ -205,13 +211,13 @@ export async function writeToUserTemplate({
     });
 
     return {
-      finalGithubUrl
-    }
+      finalGithubUrl,
+    };
   } catch (error: any) {
     console.error("An unexpected error occurred:", error.message);
     return {
-      finalGithubUrl: null
-    }
+      finalGithubUrl: null,
+    };
   } finally {
     // cleanupUserTemplateFolder();
   }
@@ -221,7 +227,7 @@ export async function writeToUserTemplate({
 async function main() {
   // const newRepoName = prompt("Enter the name for the new GitHub repository: ");
   const newRepoName = "cavalo112323";
-  const problemInLibExplained = "form is always isValid=true"
+  const problemInLibExplained = "form is always isValid=true";
 
   await writeToUserTemplate({
     gitHubCredentials: getGitHubCredentials(),
@@ -230,7 +236,7 @@ async function main() {
     libVersion: "5.14.17",
     libName: "react-hook-form",
     openAiKey: process.env.OPENAI_API_KEY ?? "",
-    libProblemExplain: problemInLibExplained
+    libProblemExplain: problemInLibExplained,
   });
 }
 
