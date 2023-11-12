@@ -37,7 +37,7 @@ async function processAI({
         content: prompt,
       },
     ],
-    model: "ft:gpt-3.5-turbo-1106:xgeeks::8JodsBt4",
+    model: "ft:gpt-3.5-turbo-1106:xgeeks::8K3oGqZe",
   });
 
   const content = chatCompletion.choices[0].message.content ?? "";
@@ -78,7 +78,7 @@ async function processAIReadMe({
         content: prompt,
       },
     ],
-    model: "ft:gpt-3.5-turbo-1106:xgeeks::8JodsBt4",
+    model: "ft:gpt-3.5-turbo-1106:xgeeks::8K3oGqZe",
   });
 
   const content = chatCompletion.choices[0].message.content ?? "";
