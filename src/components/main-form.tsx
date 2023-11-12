@@ -1,5 +1,5 @@
 "use client";
-import { signOut, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { useState } from "react";
 import sdk from "@stackblitz/sdk";
 import Button from "@mui/material/Button";
@@ -9,9 +9,6 @@ import { Box } from "@mui/material";
 import { useSnackbar } from "notistack";
 
 export function MainForm() {
-  const { data: session } = useSession();
-
-  console.log(session);
   return (
     <>
       <Form />
@@ -46,7 +43,6 @@ function Form() {
     e.preventDefault(); // Prevent the default form submission behavior.
     try {
       setFormStatus("pending");
-
       const result = await fetch("/api/submit", {
         method: "POST",
         body: JSON.stringify({

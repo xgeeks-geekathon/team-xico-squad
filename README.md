@@ -47,3 +47,9 @@ You can follow this guide https://medium.com/readytowork-org/implementing-oauth-
 ### 5. Run app locally
 
 Now you are ready to test out the app locally! To do this, simply run `npm run dev` under the project root.
+
+# IMPORTANT NOTES
+
+You need to sign out and re-sign in every time you submit in order for things to work.
+
+Hackathon MVP issues :d
