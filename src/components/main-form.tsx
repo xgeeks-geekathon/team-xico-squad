@@ -26,7 +26,7 @@ type FormValues = {
 const initialValues: FormValues = {
   libName: "",
   issueDescription: "",
-  repoName: "horse_repo",
+  repoName: "",
   libVersion: "latest",
 };
 
