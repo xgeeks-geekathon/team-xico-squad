@@ -1,25 +1,24 @@
-import dotenv from "dotenv"; 
+import dotenv from "dotenv";
 import { NextResponse } from "next/server";
 import { Account, Profile, User, getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
-import { JWT } from "next-auth/jwt";
+import { JWT, getToken } from "next-auth/jwt";
 import { writeToUserTemplate } from "../../../../repo-generator-ai/ai-repo-gen";
 import { AdapterUser } from "next-auth/adapters";
 import { resolve } from "path";
 
 dotenv.config({ path: `.env.local` });
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   const appClientID = process.env.REACT_APP_CLIENT_ID;
   const appClientSecret = process.env.REACT_APP_CLIENT_SECRET;
   const appRedirectURI = process.env.REACT_APP_REDIRECT_URI;
 
-  const json = await request.json();
+  const json = await req.json();
   console.log("SUBMIT json", json);
 
   const { libName, issueDescription, repoName, libVersion } = json;
 
-  const session = await getServerSession(authOptions);
+  const token = await getToken({ req });
 
   type Bag = {
     token: JWT;
@@ -32,15 +31,16 @@ export async function POST(request: Request) {
   };
 
   try {
-    const bag = session.token.token.token as Bag;
+    const bag = token.token as Bag;
     console.log("SUBMIT POST session", bag);
     const accessToken = bag.account?.access_token;
     const a = "";
     console.log("SUBMIT POST accessToken", accessToken);
 
     console.log("bag.profile", bag.profile);
-    const username = bag.profile?.login ?? ""
-   const {finalGithubUrl} =await writeToUserTemplate({
+    const username = bag.profile?.login ?? "";
+
+    const { finalGithubUrl } = await writeToUserTemplate({
       gitHubCredentials: {
         username,
         token: accessToken ?? "",

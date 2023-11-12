@@ -10,7 +10,11 @@
     "generate-embeddings-pinecone": "node src/scripts/indexBlogs.mjs"
   },
   "dependencies": {
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
     "@headlessui/react": "^1.7.15",
+    "@mui/icons-material": "^5.14.16",
+    "@mui/material": "^5.14.17",
     "@octokit/core": "^5.0.1",
     "@octokit/rest": "^20.0.2",
     "@pinecone-database/pinecone": "^0.1.6",
@@ -32,6 +36,7 @@
     "lucide-react": "^0.292.0",
     "next": "^13.5.4",
     "next-auth": "^4.24.5",
+    "notistack": "^3.0.1",
     "openai": "^4.17.4",
     "postcss": "8.4.24",
     "prompt-sync": "^4.2.0",

@@ -2,7 +2,7 @@ import { POST } from "@/app/api/qa-pg-vector/route";
 import { X } from "lucide-react";
 import NextAuth, { Account, NextAuthOptions, Profile, Session, User } from "next-auth";
 import GithubProvider, { GithubProfile } from "next-auth/providers/github";
- 
+
 const appClientID = process.env.REACT_APP_CLIENT_ID;
 const appClientSecret = process.env.REACT_APP_CLIENT_SECRET;
 const appRedirectURI = process.env.REACT_APP_REDIRECT_URI;
@@ -36,7 +36,7 @@ export const authOptions: NextAuthOptions = {
       return user;
     },
     session: async ({ session, token }): Promise<Session> => {
-      return { ...session, token };
+      return session;
     },
   },
   secret: nextAuthSecret as string,
