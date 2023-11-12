@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { VectorDBQAChain } from "langchain/chains";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { OpenAI } from "langchain/llms/openai";
+import { GoogleCustomSearch } from "langchain/tools";
 import { PineconeStore } from "langchain/vectorstores/pinecone";
 import { StreamingTextResponse, LangChainStream } from "ai";
 import { CallbackManager } from "langchain/callbacks";
@@ -20,13 +21,13 @@ export async function POST(request: Request) {
 
   const vectorStore = await PineconeStore.fromExistingIndex(
     new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY }),
-    { pineconeIndex }
+    { pineconeIndex },
   );
 
   const { stream, handlers } = LangChainStream();
   const model = new OpenAI({
     streaming: true,
-    modelName: "gpt-3.5-turbo-16k",
+    modelName: "ft:gpt-3.5-turbo-1106:xgeeks::8JodsBt4",
     openAIApiKey: process.env.OPENAI_API_KEY,
     callbackManager: CallbackManager.fromHandlers(handlers),
   });
