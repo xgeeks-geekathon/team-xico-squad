@@ -3,6 +3,7 @@
 ## Files explaining the project
 
 - IssueGenerator.pdf
+- demo.mp4
 
 ### 1. Fork and Clone repo
 
