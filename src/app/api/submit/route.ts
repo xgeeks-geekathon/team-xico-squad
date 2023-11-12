@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   const json = await request.json();
   console.log("SUBMIT json", json);
 
-  const { libName, issueDescription, repoName } = json;
+  const { libName, issueDescription, repoName, libVersion } = json;
 
   const session = await getServerSession(authOptions);
 
@@ -39,12 +39,14 @@ export async function POST(request: Request) {
     console.log("SUBMIT POST accessToken", accessToken);
 
     console.log("bag.profile", bag.profile);
-    await writeToUserTemplate({
+    const username = bag.profile?.login ?? ""
+   const {finalGithubUrl} =await writeToUserTemplate({
       gitHubCredentials: {
-        username: bag.profile?.login ?? "",
+        username,
         token: accessToken ?? "",
       },
       libName,
+      libVersion,
       templateName: "react-ts",
       newRepoName: repoName,
       openAiKey: process.env.OPENAI_API_KEY ?? "",
@@ -66,7 +68,7 @@ export async function POST(request: Request) {
     //   },
     // });
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return NextResponse.json({ username, repoName }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

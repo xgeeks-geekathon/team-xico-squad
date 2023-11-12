@@ -98,7 +98,7 @@ export async function writeToUserTemplate({
   templateName = "react-ts",
   newRepoName,
   libName,
-  libVersion = "5.14.17",
+  libVersion,
   openAiKey,
   libProblemExplain,
   parentPrefixPath = __dirname
@@ -107,11 +107,13 @@ export async function writeToUserTemplate({
   templateName?: string;
   newRepoName: string;
   libName: string;
-  libVersion?: string;
+  libVersion: string;
   openAiKey: string;
   libProblemExplain: string
   parentPrefixPath?: string
-}) {
+}): Promise<{
+  finalGithubUrl: string | null
+}> {
   const cleanupUserTemplateFolder = () => {
     try {
       execSync(`rm -rf ${userTemplateAbsolutePath}/*`);
@@ -140,7 +142,9 @@ export async function writeToUserTemplate({
 
     const aiProcessingPromise = processAI({
       openAiKey,
-      prompt: `Give me an example of the library ${libName}@${libVersion} in tsx that exports a default component with the name App, with a date-picker. 
+      prompt: `Give me an example of the library ${libName}@${libVersion} in tsx that exports a default component with the name App.
+       Here is the problem in more detail: ${libProblemExplain}. 
+       We want to solve this problem in the App component.
        I don't need instructions on how to install ${libName}.
        Also give me a flat json just with all the dependencies you've explicitly through import statements used on the example. The dependency name should be a key and the version should be the value.
        These peer dependencies should respect the version of the library ${libName}@${libVersion} that I specified.
@@ -151,10 +155,13 @@ export async function writeToUserTemplate({
        `,
     });
 
-    /*TODO : needs to be assync FARIA */
+    const finalGithubUrl = `https://github.com/${gitHubCredentials.username}/${newRepoName}.git`
+
     const readMeAiProcessingPromise = processAIReadMe({
       openAiKey,
-      prompt: `Generate a single markdown file for GitHub: For the typescript library ${libName} in version ${libVersion} with a problem ${libProblemExplain}. I created the repository https://github.com/${gitHubCredentials.username}/${newRepoName}.git to have an example of the problem so everyone can test it. Topics to have: Issue Description: Problem: Repository Example: Reproduction Steps:`,
+      prompt: `Generate a single markdown file for GitHub with \`\`\`markdown prefix: For the typescript library ${libName} in version ${libVersion} with a problem ${libProblemExplain}. 
+      I created the repository ${finalGithubUrl} to have an example of the problem so everyone can test it. 
+      Topics to have: Issue Description: Problem: Repository Example: Reproduction Steps this typescript project`,
     });
 
 
@@ -196,8 +203,15 @@ export async function writeToUserTemplate({
       repoName: newRepoName,
       repoPath: userTemplateAbsolutePath,
     });
+
+    return {
+      finalGithubUrl
+    }
   } catch (error: any) {
     console.error("An unexpected error occurred:", error.message);
+    return {
+      finalGithubUrl: null
+    }
   } finally {
     // cleanupUserTemplateFolder();
   }
@@ -206,14 +220,15 @@ export async function writeToUserTemplate({
 // Main function
 async function main() {
   // const newRepoName = prompt("Enter the name for the new GitHub repository: ");
-  const newRepoName = "cavalo";
-  const problemInLibExplained = "problena no package x"
+  const newRepoName = "cavalo112323";
+  const problemInLibExplained = "form is always isValid=true"
 
   await writeToUserTemplate({
     gitHubCredentials: getGitHubCredentials(),
     templateName: "react-ts",
     newRepoName,
-    libName: "@mui/material",
+    libVersion: "5.14.17",
+    libName: "react-hook-form",
     openAiKey: process.env.OPENAI_API_KEY ?? "",
     libProblemExplain: problemInLibExplained
   });

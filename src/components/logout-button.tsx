@@ -1,6 +1,7 @@
 "use client";
 import { signOut, useSession } from "next-auth/react";
 import { useState } from "react";
+import sdk from '@stackblitz/sdk'
 
 export function LogoutButton() {
   const { data: session } = useSession();
@@ -17,12 +18,14 @@ type FormValues = {
   libName: string;
   issueDescription: string;
   repoName: string;
+  libVersion: string
 };
 
 const initialValues: FormValues = {
   libName: "@mui/material",
   issueDescription: "",
   repoName: "horse_repo",
+  libVersion: 'latest'
 };
 
 function Form() {
@@ -36,14 +39,19 @@ function Form() {
     try {
       setLoading(true); // Set loading state to true.
 
-      await fetch("/api/submit", {
+     const result = await fetch("/api/submit", {
         method: "POST",
         body: JSON.stringify({
           libName: formValues.libName,
           issueDescription: formValues.issueDescription,
           repoName: formValues.repoName,
+          libVersion: formValues.libVersion
         }),
       });
+      const {username, repoName} = await result.json()
+     
+        sdk.openGithubProject(`${username}/${repoName}`)
+   
     } catch (error: any) {
       setLoading(false); // Set loading state back to false on error.
       setError(error); // Set the error message for any other errors.
@@ -75,6 +83,18 @@ function Form() {
           value={formValues.libName}
           onChange={handleChange}
           placeholder="Library Name"
+          className={`${input_style}`}
+        />
+      </div>
+
+      <div className="mb-6">
+        <input
+          required
+          type="string"
+          name="libVersion"
+          value={formValues.libVersion}
+          onChange={handleChange}
+          placeholder="Library Version"
           className={`${input_style}`}
         />
       </div>
